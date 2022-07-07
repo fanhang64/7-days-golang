@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gee"
 )
 
@@ -16,6 +17,24 @@ func main() {
 		age := ctx.Query("age")
 		ctx.String(200, "name=%v, age=%v\n", name, age)
 	})
+
+	engine.GET("/hello/:name", func(ctx *gee.Context) {
+		name := ctx.Param("name")
+		fmt.Println(name, "--------")
+		ctx.String(200, "ok")
+	})
+
+	engine.GET("/hello/:name/doc", func(ctx *gee.Context) {
+		name := ctx.Param("name")
+		fmt.Println(name, "--------")
+		ctx.String(200, "ok")
+	})
+	engine.GET("/world/*path", func(ctx *gee.Context) {
+		path := ctx.Param("path")
+		fmt.Println(path, "----===")
+		ctx.String(200, "path: %v\n", path)
+	})
+
 	engine.GET("/json", func(ctx *gee.Context) {
 		ctx.JSON(200, gee.H{
 			"name": "zs",
