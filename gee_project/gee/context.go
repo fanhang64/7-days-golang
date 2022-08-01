@@ -9,72 +9,71 @@ import (
 type H map[string]interface{}
 
 type Context struct {
-	Writer http.ResponseWriter
-	Req    *http.Request
+	Rw  http.ResponseWriter
+	Req *http.Request
 
-	Path   string
 	Method string
+	Path   string
 	Params map[string]string
 
-	StatusCode int
+	statuscode int
 }
 
-func NewContext(w http.ResponseWriter, req *http.Request) *Context {
+func newContext(w http.ResponseWriter, req *http.Request) *Context {
 	return &Context{
-		Writer: w,
+		Rw:     w,
 		Req:    req,
-		Path:   req.URL.Path,
 		Method: req.Method,
+		Path:   req.URL.Path,
 	}
 }
 
 func (c *Context) Param(key string) string {
-	value := c.Params[key]
+	value, _ := c.Params[key]
 	return value
 }
 
 func (c *Context) PostForm(key string) string {
-	s := c.Req.PostForm.Get(key)
-	return s
+	return c.Req.FormValue(key)
 }
 
 func (c *Context) Query(key string) string {
-	s := c.Req.URL.Query().Get(key)
-	return s
+	return c.Req.URL.Query().Get(key)
 }
 
-func (c *Context) Status(statuscode int) {
-	c.StatusCode = statuscode
-	c.Writer.WriteHeader(statuscode)
+func (c *Context) Status(code int) {
+	c.statuscode = code
+	c.Rw.WriteHeader(code)
 }
 
-func (c *Context) SetHeader(key, value string) {
-	c.Writer.Header().Set(key, value)
+func (c *Context) SetHeader(key, val string) {
+	c.Rw.Header().Set(key, val)
 }
 
-func (c *Context) String(code int, format string, values ...interface{}) {
+func (c *Context) String(statuscode int, format string, values ...interface{}) {
 	c.SetHeader("Content-Type", "text/plain")
-	c.Status(code)
-	c.Writer.Write([]byte(fmt.Sprintf(format, values...)))
+	c.Status(statuscode)
+	c.Rw.Write([]byte(fmt.Sprintf(format, values...)))
 }
 
-func (c *Context) JSON(code int, data interface{}) {
+func (c *Context) Json(statuscode int, obj interface{}) {
 	c.SetHeader("Content-Type", "application/json")
-	c.Status(code)
-	s, err := json.Marshal(data)
-	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+	c.Status(statuscode)
+
+	if b, err := json.Marshal(obj); err == nil {
+		c.Rw.Write(b)
+	} else {
+		http.Error(c.Rw, err.Error(), 500)
 	}
-	c.Writer.Write(s)
 }
 
-func (c *Context) HTML(code int, html string) {
+func (c *Context) Data(statuscode int, data []byte) {
+	c.Status(statuscode)
+	c.Rw.Write(data)
+}
+
+func (c *Context) Html(statuscode int, html string) {
 	c.SetHeader("Content-Type", "text/html")
-	c.Status(code)
-	c.Writer.Write([]byte(html))
-}
-
-func (c *Context) DATA(code int, data []byte) {
-	c.Status(code)
-	c.Writer.Write(data)
+	c.Status(statuscode)
+	c.Rw.Write([]byte(html))
 }
