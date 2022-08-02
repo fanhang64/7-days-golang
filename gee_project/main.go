@@ -6,35 +6,22 @@ import (
 
 func main() {
 	engine := gee.New()
-	engine.GET("/", func(c *gee.Context) {
-		c.Json(200, gee.H{
-			"name": "zs",
-			"age":  12,
-		})
-	})
-	engine.GET("/hello", func(c *gee.Context) {
-		age := c.Query("age")
-		c.String(200, "hello %s? Query age: %s", "zs", age)
-	})
-	engine.GET("/hello/:name", func(c *gee.Context) {
-		s := c.Param("name")
-
-		c.String(200, "hello wolrd-%v", s)
-	})
-
-	engine.GET("/assets/*filepath", func(c *gee.Context) {
-		s := c.Param("filepath")
-		c.String(200, "assets/----%v\n", s)
-	})
-
 	rg := engine.Group("/v1")
+	rg.Use(gee.Logger()) // 添加全局logger中间件
 	{
 		rg.GET("/hello", func(c *gee.Context) {
-			c.String(200, "new version hello world")
+			c.String(200, "v1 hello world")
 		})
 		rg.GET("/hello/:name", func(c *gee.Context) {
 			name := c.Param("name")
 			c.String(200, "hello name:%v\n", name)
+		})
+	}
+
+	rg2 := engine.Group("/v2")
+	{
+		rg2.GET("/hello", func(c *gee.Context) {
+			c.String(200, "v2 hello world")
 		})
 	}
 
